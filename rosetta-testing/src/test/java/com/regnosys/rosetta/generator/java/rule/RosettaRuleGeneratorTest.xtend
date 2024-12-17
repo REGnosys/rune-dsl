@@ -3,11 +3,16 @@ package com.regnosys.rosetta.generator.java.rule
 import com.google.inject.Guice
 import com.google.inject.Injector
 import com.regnosys.rosetta.generator.java.function.FunctionGeneratorHelper
+import com.regnosys.rosetta.generator.java.reports.TabulatorTestUtil
 import com.regnosys.rosetta.tests.RosettaInjectorProvider
 import com.regnosys.rosetta.tests.util.CodeGeneratorTestHelper
 import com.regnosys.rosetta.tests.util.ModelHelper
 import com.regnosys.rosetta.validation.RosettaIssueCodes
+import com.rosetta.model.lib.ModelReportId
 import com.rosetta.model.lib.RosettaModelObject
+import com.rosetta.model.lib.reports.Tabulator
+import com.rosetta.util.DottedPath
+import com.rosetta.util.types.generated.GeneratedJavaClassService
 import java.util.Map
 import javax.inject.Inject
 import org.eclipse.xtext.testing.InjectWith
@@ -29,6 +34,8 @@ class RosettaRuleGeneratorTest {
 	@Inject extension ModelHelper
 	@Inject extension ValidationTestHelper
 	@Inject extension FunctionGeneratorHelper
+	@Inject extension GeneratedJavaClassService
+	@Inject extension TabulatorTestUtil
 	
 	static final CharSequence REPORT_TYPES = '''
 					namespace com.rosetta.test.model
@@ -775,6 +782,134 @@ class RosettaRuleGeneratorTest {
 		val expectedBarReport = classes.createInstanceUsingBuilder("BarReport", #{"baz" -> expectedBazReport})
 		
 		assertEquals(expectedBarReport, output)
+	}
+	
+	@Test
+	def void parseSimpleReportForTypeWithExternalRuleReferencesWithEmptyAs2() {
+		val model = #[
+				'''
+					namespace com.rosetta.test.model
+
+					type Input:
+						fixedAttr string (1..1)
+						floatingAttr string (1..1)
+
+					type PeriodicPaymentLeg1:
+						fixedRate FixedRatePeriodicPaymentLeg1 (0..1)
+					    floatingRate FloatingRatePeriodicPaymentLeg1 (0..1)
+
+					type PeriodicPayment:
+					    dayCountConvention string (1..1)
+
+					type FixedRatePeriodicPaymentLeg1 extends PeriodicPayment:
+
+					type FloatingRatePeriodicPaymentLeg1 extends PeriodicPayment:
+
+				''',
+				'''
+					namespace com.rosetta.test.model
+					
+					eligibility rule IsEligible from Input:
+						filter True
+
+					reporting rule PeriodicPaymentLeg1 from Input:
+					    extract PeriodicPaymentLeg1 {
+					        fixedRate: FixedRatePeriodicPaymentLeg1, 
+					        floatingRate: FloatingRatePeriodicPaymentLeg1
+					    }
+					    as "Periodic Payment Leg 1"
+					
+					reporting rule FixedRatePeriodicPaymentLeg1 from Input:
+					    extract fixedAttr
+					    then extract FixedRatePeriodicPaymentLeg1 {
+					        dayCountConvention: DayCountConvention
+					    }
+					    as "Fixed Rate"
+					
+					reporting rule FloatingRatePeriodicPaymentLeg1 from Input:
+					    extract floatingAttr
+					    then extract FloatingRatePeriodicPaymentLeg1 {
+					        dayCountConvention: DayCountConvention
+					    }
+					    as "Floating Rate"
+					
+					reporting rule DayCountConvention from string:
+					   item
+					   as "DCC"
+					
+				''',
+				'''
+					namespace com.rosetta.test.model
+					
+					body Authority TestReg
+					corpus TestReg Asic
+
+					report TestReg Asic in T+1
+					from Input
+					when IsEligible
+					with type AsicReport
+					with source AsicRuleSource
+
+					type CommonReport:
+						periodicPaymentLeg1 PeriodicPaymentLeg1 (1..1)
+							[ruleReference PeriodicPaymentLeg1]
+					
+					type AsicReport extends CommonReport:
+					
+					reporting rule AsicFixedRateDayCountConvention from string:
+                        empty
+                        as "DCC Fixed Leg"
+                   
+                    reporting rule AsicFloatingRateDayCountConvention from string:
+                        empty
+                        as "DCC Floating Leg"
+										
+					rule source AsicRuleSource {
+						
+						FixedRatePeriodicPaymentLeg1:
+							+ dayCountConvention
+							    [ruleReference AsicFixedRateDayCountConvention]
+						
+                        FloatingRatePeriodicPaymentLeg1:
+                            + dayCountConvention
+                                [ruleReference AsicFloatingRateDayCountConvention]
+					}
+					
+				''']
+		val code = model.generateCode
+		val classes = code.compileToClasses
+
+        // tabulator issues
+        // external rule refs clash on super type
+
+        val input = classes.createInstanceUsingBuilder("Input", #{"fixedAttr" -> "fixedAttrValue", "floatingAttr" -> "floatingAttrValue"})
+		
+        val asicReportId = new ModelReportId(DottedPath.splitOnDots("com.rosetta.test.model"), "TestReg", "Asic")
+        val asicReportFunctionClass = asicReportId.toJavaReportFunction
+        val test = classes.createFunc(asicReportFunctionClass.packageName.withDots, asicReportFunctionClass.simpleName)
+		
+		
+		val asicReport = test.invokeFunc(RosettaModelObject, input)
+		println(asicReport)
+		
+		// expected output
+		val expectedAsicFixedRate = classes.createInstanceUsingBuilder("FixedRatePeriodicPaymentLeg1", #{"dayCountConvention" -> "fixedAttrValue"})
+		val expectedAsicFloatingRate = classes.createInstanceUsingBuilder("FloatingRatePeriodicPaymentLeg1", #{"dayCountConvention" -> "floatingAttrValue"})
+		val expectedAsicPeriodicPaymentLeg1 = classes.createInstanceUsingBuilder("PeriodicPaymentLeg1", #{"fixedRate" -> expectedAsicFixedRate, "floatingRate" -> expectedAsicFloatingRate})
+		val expectedAsicReport = classes.createInstanceUsingBuilder("AsicReport", #{"periodicPaymentLeg1" -> expectedAsicPeriodicPaymentLeg1})
+		
+		assertEquals(expectedAsicReport, asicReport)
+		
+		val asicReportTabulatorClass = asicReportId.toJavaReportTabulator
+        val asicTabulator = classes.<Tabulator<RosettaModelObject>>createInstance(asicReportTabulatorClass)
+        
+        val tabulatedAsicReport = asicTabulator.tabulate(asicReport)
+        println(tabulatedAsicReport)
+		val expectedTabulatedAsicReport =
+		'''
+		periodicPaymentLeg1:
+		'''
+		assertFieldValuesEqual(expectedTabulatedAsicReport, tabulatedAsicReport)
 	}
 	
 	@Test

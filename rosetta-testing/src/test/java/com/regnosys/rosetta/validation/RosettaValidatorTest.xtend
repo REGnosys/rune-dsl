@@ -1374,6 +1374,48 @@ class RosettaValidatorTest implements RosettaIssueCodes {
 	}
 	
 	@Test
+	def void shouldAddDifferentRuleReferencesToCommonAttributeOnDifferentSubTypes() {
+		val model = '''
+			body Authority TEST_REG
+			corpus TEST_REG FOO
+			
+			report TEST_REG FOO in T+1
+			from ReportableEvent
+			when FooRule
+			with type Foo
+			with source TestA
+			
+			eligibility rule FooRule from Foo:
+				filter foo exists
+
+			type Foo:
+				foo string (0..1)
+			
+			type FooA extends Foo:
+			
+			type FooB extends Foo:
+			
+			reporting rule RA from FooA:
+				"A"
+			
+			reporting rule RB from FooB:
+				"B"
+			
+			rule source TestA {
+				FooA:
+                    + foo
+                        [ruleReference RA]
+                
+                FooB:
+                    + foo
+                        [ruleReference RB]
+			}
+		'''.parseRosetta
+		
+		model.assertNoErrors
+	}
+	
+	@Test
 	def void externalRuleSourceCannotExtendExternalSynonymSourceTest() {
 		val model = '''
 			synonym source SynSource {}

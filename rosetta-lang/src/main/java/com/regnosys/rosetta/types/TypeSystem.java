@@ -28,6 +28,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 import org.apache.commons.lang3.Validate;
+import org.eclipse.xtext.xbase.lib.Pair;
 
 import com.regnosys.rosetta.cache.IRequestScopedCache;
 import com.regnosys.rosetta.interpreter.RosettaInterpreterContext;
@@ -38,8 +39,7 @@ import com.regnosys.rosetta.rosetta.expression.RosettaExpression;
 import com.regnosys.rosetta.types.builtin.RBuiltinTypeService;
 import com.regnosys.rosetta.typing.RosettaTyping;
 import com.regnosys.rosetta.utils.ExternalAnnotationUtil;
-
-import org.eclipse.xtext.xbase.lib.Pair;
+import com.regnosys.rosetta.utils.ExternalAnnotationUtil.RDataTypeAndRAttribute;
 
 public class TypeSystem {
 	public static String RULE_INPUT_TYPE_CACHE_KEY = TypeSystem.class.getCanonicalName() + ".RULE_INPUT_TYPE";
@@ -71,10 +71,11 @@ public class TypeSystem {
                 return builtins.ANY;
             }
 
-            Map<RAttribute, RosettaRule> ruleReferences = annotationUtil.getAllRuleReferencesForType(source, data);
+            Map<RDataTypeAndRAttribute, RosettaRule> ruleReferences = annotationUtil.getAllRuleReferencesForType(source, data);
             RType result = builtins.ANY;
             for (RAttribute attr: data.getOwnAttributes()) {
-                RosettaRule rule = ruleReferences.get(attr);
+            	RDataTypeAndRAttribute typeAndAttr = new RDataTypeAndRAttribute(data, attr);
+                RosettaRule rule = ruleReferences.get(typeAndAttr);
                 if (rule != null) {
                     RType inputType = typeCallToRType(rule.getInput());
                     result = meet(result, inputType);

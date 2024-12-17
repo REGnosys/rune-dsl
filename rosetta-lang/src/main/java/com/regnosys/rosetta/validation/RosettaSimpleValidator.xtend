@@ -127,6 +127,8 @@ import java.util.Collection
 import org.eclipse.xtext.resource.IResourceDescriptions
 import com.regnosys.rosetta.types.RMetaAnnotatedType
 import com.regnosys.rosetta.rosetta.RosettaMetaType
+import com.regnosys.rosetta.rosetta.RosettaExternalClass
+import com.regnosys.rosetta.utils.ExternalAnnotationUtil.RDataTypeAndRAttribute
 
 // TODO: split expression validator
 // TODO: type check type call arguments
@@ -487,25 +489,27 @@ class RosettaSimpleValidator extends AbstractDeclarativeRosettaValidator {
 			this.objectFactory = objectFactory
 		}
 
-		final Map<RAttribute, RosettaRule> ruleMap = newHashMap;
+		final Map<RDataTypeAndRAttribute, RosettaRule> ruleMap = newHashMap;
 		final Map<RosettaExternalRegularAttribute, String> errorMap = newHashMap;
 		final Set<RDataType> collectedTypes = newHashSet;
 
-		override void add(RAttribute attr, RosettaRule rule) {
-			ruleMap.put(attr, rule);
+		override void add(RDataType type, RAttribute attr, RosettaRule rule) {
+			ruleMap.put(new RDataTypeAndRAttribute(type, attr), rule);
 		}
 
-		override void add(RosettaExternalRegularAttribute extAttr, RosettaRule rule) {
+		override void add(RosettaExternalClass extType, RosettaExternalRegularAttribute extAttr, RosettaRule rule) {
+			val type = (extType.data).buildRDataType
 			val attr = (extAttr.attributeRef as Attribute).buildRAttribute
-			if (!ruleMap.containsKey(attr)) {
-				ruleMap.put(attr, rule);
+			val typeAndAttr = new RDataTypeAndRAttribute(type, attr)
+			if (!ruleMap.containsKey(typeAndAttr)) {
+				ruleMap.put(typeAndAttr, rule);
 			} else {
 				errorMap.put(
 					extAttr, '''There is already a mapping defined for `«attr.name»`. Try removing the mapping first with `- «attr.name»`.''')
 			}
 		}
 
-		override void remove(RosettaExternalRegularAttribute extAttr) {
+		override void remove(RosettaExternalClass extType, RosettaExternalRegularAttribute extAttr) {
 			val attr = (extAttr.attributeRef as Attribute).buildRAttribute
 			if (ruleMap.containsKey(attr)) {
 				ruleMap.remove(attr);

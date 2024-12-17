@@ -16,6 +16,15 @@
 
 package com.regnosys.rosetta.validation;
 
+import static com.regnosys.rosetta.rosetta.RosettaPackage.Literals.ROSETTA_EXTERNAL_CLASS__DATA;
+import static com.regnosys.rosetta.rosetta.RosettaPackage.Literals.ROSETTA_EXTERNAL_REGULAR_ATTRIBUTE__ATTRIBUTE_REF;
+import static com.regnosys.rosetta.rosetta.RosettaPackage.Literals.ROSETTA_REPORT__ELIGIBILITY_RULES;
+import static com.regnosys.rosetta.rosetta.RosettaPackage.Literals.ROSETTA_REPORT__REPORT_TYPE;
+import static com.regnosys.rosetta.rosetta.RosettaPackage.Literals.ROSETTA_REPORT__RULE_SOURCE;
+import static com.regnosys.rosetta.rosetta.expression.ExpressionPackage.Literals.CHOICE_OPERATION__ATTRIBUTES;
+import static com.regnosys.rosetta.rosetta.expression.ExpressionPackage.Literals.ROSETTA_UNARY_OPERATION__ARGUMENT;
+import static com.regnosys.rosetta.rosetta.simple.SimplePackage.Literals.ROSETTA_RULE_REFERENCE__REPORTING_RULE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,23 +47,19 @@ import com.regnosys.rosetta.rosetta.expression.ChoiceOperation;
 import com.regnosys.rosetta.rosetta.expression.RosettaOnlyElement;
 import com.regnosys.rosetta.rosetta.simple.Attribute;
 import com.regnosys.rosetta.rosetta.simple.Data;
-import com.regnosys.rosetta.rosetta.simple.RosettaRuleReference;
-import com.regnosys.rosetta.types.RType;
 import com.regnosys.rosetta.types.RAttribute;
 import com.regnosys.rosetta.types.RChoiceType;
 import com.regnosys.rosetta.types.RDataType;
 import com.regnosys.rosetta.types.RListType;
 import com.regnosys.rosetta.types.RObjectFactory;
+import com.regnosys.rosetta.types.RType;
 import com.regnosys.rosetta.types.TypeFactory;
 import com.regnosys.rosetta.types.TypeSystem;
 import com.regnosys.rosetta.types.TypeValidationUtil;
 import com.regnosys.rosetta.types.builtin.RBuiltinTypeService;
 import com.regnosys.rosetta.typing.validation.RosettaTypingCheckingValidator;
 import com.regnosys.rosetta.utils.ExternalAnnotationUtil;
-
-import static com.regnosys.rosetta.rosetta.expression.ExpressionPackage.Literals.*;
-import static com.regnosys.rosetta.rosetta.RosettaPackage.Literals.*;
-import static com.regnosys.rosetta.rosetta.simple.SimplePackage.Literals.*;
+import com.regnosys.rosetta.utils.ExternalAnnotationUtil.RDataTypeAndRAttribute;
 
 public class StandaloneRosettaTypingValidator extends RosettaTypingCheckingValidator {
 	@Inject
@@ -194,7 +199,7 @@ public class StandaloneRosettaTypingValidator extends RosettaTypingCheckingValid
 	public void checkExternalRuleSource(RosettaExternalRuleSource source) {
 		for (RosettaExternalClass externalClass: source.getExternalClasses()) {
 			RDataType data = objectFactory.buildRDataType(externalClass.getData());
-			Map<RAttribute, RosettaRule> ruleReferences = annotationUtil.getAllRuleReferencesForType(Optional.of(source), data);
+			Map<RDataTypeAndRAttribute, RosettaRule> ruleReferences = annotationUtil.getAllRuleReferencesForType(Optional.of(source), data);
 			
 			RType current = builtins.ANY;
 			for (RAttribute attr: data.getOwnAttributes()) {
@@ -202,7 +207,8 @@ public class StandaloneRosettaTypingValidator extends RosettaTypingCheckingValid
 						.filter(ext -> ext.getOperator() == ExternalValueOperator.PLUS)
 						.filter(ext -> ext.getAttributeRef().equals(attr.getEObject()))
 						.findAny();
-				RosettaRule rule = ruleReferences.get(attr);
+				RDataTypeAndRAttribute dataAndAttr = new RDataTypeAndRAttribute(data, attr);
+				RosettaRule rule = ruleReferences.get(dataAndAttr);
 				if (rule != null) {
 					RType inputType = ts.typeCallToRType(rule.getInput());
 					RType newCurrent = ts.meet(current, inputType);
