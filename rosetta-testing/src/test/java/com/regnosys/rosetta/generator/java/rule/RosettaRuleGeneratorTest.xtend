@@ -4,10 +4,9 @@ import com.google.inject.Guice
 import com.google.inject.Injector
 import com.regnosys.rosetta.generator.java.function.FunctionGeneratorHelper
 import com.regnosys.rosetta.generator.java.reports.TabulatorTestUtil
-import com.regnosys.rosetta.tests.RosettaInjectorProvider
+import com.regnosys.rosetta.tests.RosettaTestInjectorProvider
 import com.regnosys.rosetta.tests.util.CodeGeneratorTestHelper
 import com.regnosys.rosetta.tests.util.ModelHelper
-import com.regnosys.rosetta.validation.RosettaIssueCodes
 import com.rosetta.model.lib.ModelReportId
 import com.rosetta.model.lib.RosettaModelObject
 import com.rosetta.model.lib.reports.Tabulator
@@ -26,7 +25,7 @@ import static com.regnosys.rosetta.rosetta.expression.ExpressionPackage.Literals
 import static org.hamcrest.MatcherAssert.*
 import static org.junit.jupiter.api.Assertions.*
 
-@InjectWith(RosettaInjectorProvider)
+@InjectWith(RosettaTestInjectorProvider)
 @ExtendWith(InjectionExtension)
 class RosettaRuleGeneratorTest {
 
@@ -770,7 +769,7 @@ class RosettaRuleGeneratorTest {
 		}
 		val classes = code.compileToClasses
 
-        val test = classes.createFunc("com.rosetta.test.model.reports", "TEST_REGMiFIRReportFunction")
+        val test = classes.createFunc(DottedPath.splitOnDots("com.rosetta.test.model.reports"), "TEST_REGMiFIRReportFunction")
 		
 		val input = classes.createInstanceUsingBuilder("Bar", #{"bar1" -> "bar1Value"})
 		
@@ -886,7 +885,7 @@ class RosettaRuleGeneratorTest {
 		
         val asicReportId = new ModelReportId(DottedPath.splitOnDots("com.rosetta.test.model"), "TestReg", "Asic")
         val asicReportFunctionClass = asicReportId.toJavaReportFunction
-        val test = classes.createFunc(asicReportFunctionClass.packageName.withDots, asicReportFunctionClass.simpleName)
+        val test = classes.createFunc(asicReportFunctionClass.packageName, asicReportFunctionClass.simpleName)
 		
 		
 		val asicReport = test.invokeFunc(RosettaModelObject, input)
@@ -1412,8 +1411,8 @@ class RosettaRuleGeneratorTest {
 		'''.toString
 		.replace('\r', "")
 		.parseRosetta
-			.assertError(ROSETTA_SYMBOL_REFERENCE, RosettaIssueCodes.TYPE_ERROR,
-			"Expected type 'Foo' but was 'Bar'")
+			.assertError(ROSETTA_SYMBOL_REFERENCE, null,
+			"Expected type `Foo`, but got `Bar` instead. Rule `Rule2` cannot be called with type `Bar`")
 		
 	}
 

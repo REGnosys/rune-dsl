@@ -16,60 +16,38 @@
 
 package com.regnosys.rosetta.validation;
 
-import static com.regnosys.rosetta.rosetta.RosettaPackage.Literals.ROSETTA_EXTERNAL_CLASS__DATA;
-import static com.regnosys.rosetta.rosetta.RosettaPackage.Literals.ROSETTA_EXTERNAL_REGULAR_ATTRIBUTE__ATTRIBUTE_REF;
-import static com.regnosys.rosetta.rosetta.RosettaPackage.Literals.ROSETTA_REPORT__ELIGIBILITY_RULES;
-import static com.regnosys.rosetta.rosetta.RosettaPackage.Literals.ROSETTA_REPORT__REPORT_TYPE;
-import static com.regnosys.rosetta.rosetta.RosettaPackage.Literals.ROSETTA_REPORT__RULE_SOURCE;
-import static com.regnosys.rosetta.rosetta.expression.ExpressionPackage.Literals.CHOICE_OPERATION__ATTRIBUTES;
-import static com.regnosys.rosetta.rosetta.expression.ExpressionPackage.Literals.ROSETTA_UNARY_OPERATION__ARGUMENT;
-import static com.regnosys.rosetta.rosetta.simple.SimplePackage.Literals.ROSETTA_RULE_REFERENCE__REPORTING_RULE;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import javax.inject.Inject;
 
-import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.xtext.validation.Check;
-import org.eclipse.xtext.validation.EValidatorRegistrar;
 
 import com.regnosys.rosetta.rosetta.ExternalValueOperator;
-import com.regnosys.rosetta.rosetta.RosettaCardinality;
 import com.regnosys.rosetta.rosetta.RosettaExternalClass;
 import com.regnosys.rosetta.rosetta.RosettaExternalRegularAttribute;
 import com.regnosys.rosetta.rosetta.RosettaExternalRuleSource;
 import com.regnosys.rosetta.rosetta.RosettaReport;
 import com.regnosys.rosetta.rosetta.RosettaRule;
-import com.regnosys.rosetta.rosetta.expression.ChoiceOperation;
-import com.regnosys.rosetta.rosetta.expression.RosettaOnlyElement;
 import com.regnosys.rosetta.rosetta.simple.Attribute;
 import com.regnosys.rosetta.rosetta.simple.Data;
 import com.regnosys.rosetta.types.RAttribute;
 import com.regnosys.rosetta.types.RChoiceType;
 import com.regnosys.rosetta.types.RDataType;
-import com.regnosys.rosetta.types.RListType;
 import com.regnosys.rosetta.types.RObjectFactory;
-import com.regnosys.rosetta.types.RType;
-import com.regnosys.rosetta.types.TypeFactory;
 import com.regnosys.rosetta.types.TypeSystem;
-import com.regnosys.rosetta.types.TypeValidationUtil;
 import com.regnosys.rosetta.types.builtin.RBuiltinTypeService;
-import com.regnosys.rosetta.typing.validation.RosettaTypingCheckingValidator;
 import com.regnosys.rosetta.utils.ExternalAnnotationUtil;
 import com.regnosys.rosetta.utils.ExternalAnnotationUtil.RDataTypeAndRAttribute;
+import com.regnosys.rosetta.types.RType;
 
-public class StandaloneRosettaTypingValidator extends RosettaTypingCheckingValidator {
+import static com.regnosys.rosetta.rosetta.RosettaPackage.Literals.*;
+import static com.regnosys.rosetta.rosetta.simple.SimplePackage.Literals.*;
+
+public class ReportValidator extends AbstractDeclarativeRosettaValidator {
 	@Inject
 	private TypeSystem ts;
-	
-	@Inject
-	private TypeFactory tf;
-	
-	@Inject
-	private TypeValidationUtil tu;
 	
 	@Inject
 	private RBuiltinTypeService builtins;
@@ -79,50 +57,6 @@ public class StandaloneRosettaTypingValidator extends RosettaTypingCheckingValid
 	
 	@Inject
 	private RObjectFactory objectFactory;
-	
-	@Override
-	protected List<EPackage> getEPackages() {
-		List<EPackage> result = new ArrayList<EPackage>();
-		result.add(EPackage.Registry.INSTANCE.getEPackage("http://www.rosetta-model.com/Rosetta"));
-		result.add(EPackage.Registry.INSTANCE.getEPackage("http://www.rosetta-model.com/RosettaSimple"));
-		result.add(EPackage.Registry.INSTANCE.getEPackage("http://www.rosetta-model.com/RosettaExpression"));
-		result.add(EPackage.Registry.INSTANCE.getEPackage("http://www.rosetta-model.com/RosettaTranslate"));
-		return result;
-	}
-	
-	@Override
-	public void register(EValidatorRegistrar registrar) {
-	}
-	
-	/**
-	 * Xsemantics does not allow raising warnings. See https://github.com/eclipse/xsemantics/issues/149.
-	 */
-	@Check
-	public void checkOnlyElement(RosettaOnlyElement e) {
-		RListType t = ts.inferType(e.getArgument());
-		if (t != null) {
-			RosettaCardinality minimalConstraint = tf.createConstraint(1, 2);
-			if (!minimalConstraint.isSubconstraintOf(t.getConstraint())) {
-				warning(tu.notLooserConstraintMessage(minimalConstraint, t), e, ROSETTA_UNARY_OPERATION__ARGUMENT);
-			}
-		}
-	}
-	
-	/**
-	 * Xsemantics does not allow raising errors on a specific index of a multi-valued feature.
-	 * See https://github.com/eclipse/xsemantics/issues/64.
-	 */
-	@Check
-	public void checkChoiceOperationHasNoDuplicateAttributes(ChoiceOperation e) {
-		for (var i = 1; i < e.getAttributes().size(); i++) {
-			Attribute attr = e.getAttributes().get(i);
-			for (var j = 0; j < i; j++) {
-				if (attr.equals(e.getAttributes().get(j))) {
-					error("Duplicate attribute.", e, CHOICE_OPERATION__ATTRIBUTES, i);
-				}
-			}
-		}
-	}
 	
 	@Check
 	public void checkReport(RosettaReport report) {
