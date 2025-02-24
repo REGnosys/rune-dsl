@@ -22,6 +22,7 @@ import com.regnosys.rosetta.types.RObjectFactory;
 import com.rosetta.model.lib.RosettaModelObject;
 import com.rosetta.model.lib.functions.LabelProvider;
 import com.rosetta.model.lib.functions.RosettaFunction;
+import com.rosetta.model.lib.reports.ReportFunction;
 import com.rosetta.util.types.JavaType;
 
 /**
@@ -196,10 +197,11 @@ public class JavaTestModel {
 	public String getReportJavaSource(String body, String... corpusList) {
 		return getSource(getReportJavaType(body, corpusList));
 	}
-	public Class<? extends RosettaFunction> getReportJavaClass(String body, String... corpusList) {
-		return getClass(RosettaFunction.class, getReportJavaType(body, corpusList));
+	@SuppressWarnings("unchecked")
+	public Class<? extends ReportFunction<Object, Object>> getReportJavaClass(String body, String... corpusList) {
+		return (Class<? extends ReportFunction<Object, Object>>) getClass(ReportFunction.class, getReportJavaType(body, corpusList));
 	}
-	public RosettaFunction getReportJavaInstance(String body, String... corpusList) {
+	public ReportFunction<Object, Object> getReportJavaInstance(String body, String... corpusList) {
 		return injector.getInstance(getReportJavaClass(body, corpusList));
 	}
 }

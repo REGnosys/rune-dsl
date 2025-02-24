@@ -1,19 +1,19 @@
 package com.regnosys.rosetta.tests.util
 
-import com.regnosys.rosetta.tests.util.ExpressionParser
-import javax.inject.Inject
-import com.regnosys.rosetta.generator.java.expression.ExpressionGenerator
-import com.rosetta.util.types.JavaType
-import com.regnosys.rosetta.generator.java.JavaScope
-import com.rosetta.util.DottedPath
-import com.regnosys.rosetta.tests.compiler.InMemoryJavacCompiler
-import com.regnosys.rosetta.generator.java.util.ImportManagerExtension
-import org.eclipse.xtend2.lib.StringConcatenationClient
-import org.eclipse.xtext.testing.validation.ValidationTestHelper
-import com.regnosys.rosetta.rosetta.RosettaModel
-import com.regnosys.rosetta.generator.java.expression.JavaDependencyProvider
 import com.google.inject.Injector
 import com.regnosys.rosetta.generator.java.JavaIdentifierRepresentationService
+import com.regnosys.rosetta.generator.java.JavaScope
+import com.regnosys.rosetta.generator.java.expression.ExpressionGenerator
+import com.regnosys.rosetta.generator.java.expression.JavaDependencyProvider
+import com.regnosys.rosetta.generator.java.util.ImportManagerExtension
+import com.regnosys.rosetta.rosetta.RosettaModel
+import com.regnosys.rosetta.tests.compiler.InMemoryJavacCompiler
+import com.regnosys.rosetta.tests.util.ExpressionParser
+import com.rosetta.util.DottedPath
+import com.rosetta.util.types.JavaType
+import javax.inject.Inject
+import org.eclipse.xtend2.lib.StringConcatenationClient
+import org.eclipse.xtext.testing.validation.ValidationTestHelper
 
 class ExpressionJavaEvaluatorService {
 	@Inject
@@ -62,6 +62,8 @@ class ExpressionJavaEvaluatorService {
 		val evaluatorClass = compiler.compile(packageName.child(className).withDots, sourceCode)
 		val instance = injector.getInstance(evaluatorClass)
 		
-		evaluatorClass.getDeclaredMethod(methodName).invoke(instance)
+		val result = evaluatorClass.getDeclaredMethod(methodName).invoke(instance)
+		compiler.addSource
+		result
 	}
 }

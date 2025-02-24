@@ -4,25 +4,26 @@ import com.regnosys.rosetta.generator.RosettaGenerator
 import com.regnosys.rosetta.generator.RosettaInternalGenerator
 import com.regnosys.rosetta.generator.java.RosettaJavaPackages.RootPackage
 import com.regnosys.rosetta.rosetta.RosettaModel
+import com.regnosys.rosetta.tests.compiler.InMemoryJavacCompiler
+import com.regnosys.rosetta.utils.ModelIdProvider
+import com.rosetta.model.lib.RosettaModelObject
+import com.rosetta.model.lib.RosettaModelObjectBuilder
 import com.rosetta.model.lib.meta.FieldWithMeta
+import com.rosetta.model.metafields.MetaFields
 import java.io.File
 import java.lang.reflect.Method
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.List
 import java.util.Map
+import javax.inject.Inject
 import org.eclipse.emf.ecore.resource.Resource
+import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.xtext.generator.GeneratorContext
 import org.eclipse.xtext.util.CancelIndicator
 import org.eclipse.xtext.xbase.testing.RegisteringFileSystemAccess
 
 import static com.google.common.collect.ImmutableMap.*
-import com.rosetta.model.lib.RosettaModelObject
-import javax.inject.Inject
-import com.regnosys.rosetta.tests.compiler.InMemoryJavacCompiler
-import com.regnosys.rosetta.utils.ModelIdProvider
-import com.rosetta.model.lib.RosettaModelObjectBuilder
-import com.rosetta.model.metafields.MetaFields
 
 class CodeGeneratorTestHelper {
 
@@ -83,6 +84,10 @@ class CodeGeneratorTestHelper {
 		]
 		
 		return generatedCode
+	}
+	
+	def generateCode(ResourceSet models) {
+		generateCode(models.resources)
 	}
 	
 	def generateCode(RosettaModel model) {

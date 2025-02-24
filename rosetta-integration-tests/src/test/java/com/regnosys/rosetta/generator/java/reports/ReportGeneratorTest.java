@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import com.regnosys.rosetta.generator.java.RosettaJavaPackages.RootPackage;
 import com.regnosys.rosetta.generator.java.function.FunctionGeneratorHelper;
 import com.regnosys.rosetta.tests.RosettaTestInjectorProvider;
+import com.regnosys.rosetta.tests.testmodel.RosettaTestModelService;
 import com.regnosys.rosetta.tests.util.CodeGeneratorTestHelper;
 import com.rosetta.model.lib.RosettaModelObject;
 import com.rosetta.model.lib.functions.RosettaFunction;
@@ -151,19 +152,35 @@ public class ReportGeneratorTest {
     FunctionGeneratorHelper functionGeneratorHelper;
     @Inject
     CodeGeneratorTestHelper generatorTestHelper;
+    @Inject
+    RosettaTestModelService testModelService;
 
     @Test
     void shouldReportBasedOnInlineRuleReference() {
-        var code = generatorTestHelper.generateCode(COMMON_REPORT_TYPES, INLINE_REPORT_RULES);
-        var classes = generatorTestHelper.compileToClasses(code);
-        var reportFunc = getFunc(classes, "TestBodyTestCorpus1ReportFunction");
+    	var testModel = testModelService.toJavaTestModel(INLINE_REPORT_RULES, COMMON_REPORT_TYPES).compile();
+        var reportFunc = testModel.getReportJavaInstance("TestBody", "TestCorpus1");
 
-        var result = functionGeneratorHelper.invokeFunc(reportFunc, RosettaModelObject.class, getInput(classes));
-
-        var expectedResult = getOutput(classes, "BarReport", Map.of(
-                "out1", "v1",
-                "out2", "v2"
-        ));
+        var input = testModel.evaluateExpression(RosettaModelObject.class, """
+        		BarReportInstruction {
+	                bar1: "v1",
+	                bar2: "v2",
+	                bar3: "v3",
+	                bar4: "v4",
+	                bar5: "v5",
+	                bar6: "v6",
+	                bar7: "v7"
+        		}
+        		""");
+        
+        var result = reportFunc.evaluate(input);
+        
+        var expectedResult = testModel.evaluateExpression(RosettaModelObject.class, """
+        		BarReport {
+	                out1: "v1",
+	                out2: "v2",
+	                ...
+        		}
+        		""");
 
         assertEquals(expectedResult, result);
     }
