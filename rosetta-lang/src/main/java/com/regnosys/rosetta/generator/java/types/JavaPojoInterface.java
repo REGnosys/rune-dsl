@@ -51,6 +51,11 @@ public abstract class JavaPojoInterface extends JavaClass<RosettaModelObject> {
 			.findAny()
 			.orElseThrow(() -> new NoSuchElementException("No property named " + propertyName + " in pojo " + this));
 	}
+	public JavaPojoProperty findPropertyGivenRuneName(String runeName) {
+		return getAllProperties().stream().filter(prop -> prop.getRuneNames().contains(runeName))
+				.findAny()
+				.orElseThrow(() -> new NoSuchElementException("No rune property named " + runeName + " in pojo " + this));
+	}
 
 	@Override
 	public JavaClass<? super RosettaModelObject> getSuperclassDeclaration() {

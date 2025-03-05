@@ -18,6 +18,8 @@ import com.regnosys.rosetta.generator.java.types.JavaPojoProperty
 import com.regnosys.rosetta.generator.java.types.JavaTypeTranslator
 import com.regnosys.rosetta.generator.java.types.JavaTypeUtil
 import com.regnosys.rosetta.generator.java.types.RJavaFieldWithMeta
+import com.regnosys.rosetta.generator.java.types.RJavaPojoInterface
+import com.regnosys.rosetta.generator.java.types.RJavaReferenceWithMeta
 import com.regnosys.rosetta.generator.java.types.RJavaWithMetaValue
 import com.regnosys.rosetta.generator.java.util.ImportManagerExtension
 import com.regnosys.rosetta.generator.java.util.ModelGeneratorUtil
@@ -63,13 +65,13 @@ import com.rosetta.util.types.JavaPrimitiveType
 import com.rosetta.util.types.JavaReferenceType
 import com.rosetta.util.types.JavaType
 import com.rosetta.util.types.generated.GeneratedJavaClass
+import jakarta.inject.Inject
 import java.util.ArrayList
 import java.util.Collections
 import java.util.List
 import java.util.Map
 import java.util.Optional
 import java.util.stream.Collectors
-import jakarta.inject.Inject
 import org.eclipse.xtend2.lib.StringConcatenationClient
 import org.eclipse.xtext.generator.IFileSystemAccess2
 
@@ -77,10 +79,6 @@ import static com.regnosys.rosetta.generator.java.enums.EnumHelper.*
 import static com.regnosys.rosetta.generator.java.util.ModelGeneratorUtil.*
 
 import static extension com.regnosys.rosetta.types.RMetaAnnotatedType.withNoMeta
-import com.regnosys.rosetta.generator.java.types.RJavaReferenceWithMeta
-import com.regnosys.rosetta.types.RDataType
-import com.regnosys.rosetta.generator.java.types.RJavaPojoInterface
-import com.regnosys.rosetta.types.RMetaAnnotatedType
 
 class FunctionGenerator {
 
@@ -484,7 +482,7 @@ class FunctionGenerator {
 					val outputExpressionType = expr.expressionType.itemType
 					val prop = getPojoProperty(seg, outputExpressionType)
 					
-					val propertySetterName = getPropertySetterName(outputExpressionType, prop, seg)
+					val propertySetterName = getPropertySetterName(outputExpressionType, prop, seg)					
 					val requiresValueSetter = requiresValueSetter(outputExpressionType, prop, seg, op)
 					expr = JavaExpression.from(
 						'''
@@ -499,8 +497,12 @@ class FunctionGenerator {
 	}
 	
 	private def String getPropertySetterName(JavaType outputExpressionType, JavaPojoProperty prop, RFeature segment) {
-		if (outputExpressionType instanceof RJavaWithMetaValue || (segment instanceof RMetaAttribute && outputExpressionType instanceof RJavaPojoInterface)) {
-			segment.toPojoPropertyNames.toFirstUpper
+//		if (outputExpressionType instanceof RJavaWithMetaValue || (segment instanceof RMetaAttribute && outputExpressionType instanceof RJavaPojoInterface)) {
+		if (outputExpressionType instanceof RJavaFieldWithMeta) {
+//			segment.toPojoPropertyNames.toFirstUpper
+			return META_FIELDS_JAVA_POJO.findPropertyGivenRuneName(segment.name).name.toFirstUpper
+		} else if (outputExpressionType instanceof RJavaReferenceWithMeta) {
+			outputExpressionType.findPropertyGivenRuneName(segment.name).name.toFirstUpper
 		} else {
 			prop.name.toFirstUpper
 		}
@@ -537,25 +539,27 @@ class FunctionGenerator {
 	
 	//The type of the output expression to be set and the pojo property type are not the same when working with meta
 	private def JavaPojoProperty getPojoProperty(RFeature seg, JavaType outputExpressionType) {
-		if (seg instanceof RMetaAttribute && (outputExpressionType instanceof RJavaFieldWithMeta || outputExpressionType instanceof RJavaPojoInterface)) {
+		if (seg instanceof RMetaAttribute && (outputExpressionType instanceof RJavaFieldWithMeta)) {
 			(outputExpressionType as JavaPojoInterface).findProperty("meta")
 		} else if (seg instanceof RMetaAttribute && outputExpressionType instanceof RJavaReferenceWithMeta) {
 			(outputExpressionType as JavaPojoInterface).findProperty("reference")
 		} else  if (outputExpressionType instanceof RJavaWithMetaValue) {
 			(outputExpressionType as JavaPojoInterface).findProperty("value")
 		} else {
-			(outputExpressionType as JavaPojoInterface).findProperty(seg.name)
+			(outputExpressionType as JavaPojoInterface).findPropertyGivenRuneName(seg.name)
 		}
 	}
 	
 	private def String toPojoPropertyNames(RFeature seg) {
-		return switch(seg.name) {
-			case "reference": "externalReference"
-			case "id": "externalKey"
-			case "key": "externalKey"
-			case "address": "reference"
-			default: seg.name
-		}
+		return META_FIELDS_JAVA_POJO.findPropertyGivenRuneName(seg.name).name
+		
+//		return switch(seg.name) {
+//			case "reference": "externalReference"
+//			case "id": "externalKey"
+//			case "key": "externalKey"
+//			case "address": "reference"
+//			default: seg.name
+//		}
 	}
 	
 

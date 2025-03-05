@@ -38,6 +38,8 @@ import com.rosetta.model.lib.mapper.MapperC;
 import com.rosetta.model.lib.mapper.MapperListOfLists;
 import com.rosetta.model.lib.mapper.MapperS;
 import com.rosetta.model.lib.meta.FieldWithMeta;
+import com.rosetta.model.lib.meta.GlobalKeyFields;
+import com.rosetta.model.lib.meta.MetaDataFields;
 import com.rosetta.model.lib.meta.Reference;
 import com.rosetta.model.lib.meta.ReferenceWithMeta;
 import com.rosetta.model.metafields.MetaAndTemplateFields;
@@ -57,7 +59,6 @@ public class JavaTypeUtil {
 	private JavaTypeTranslator typeTranslator;
 	@Inject
 	private JavaTypeJoiner typeJoiner;
-	
 	public final JavaClass<Number> NUMBER = JavaClass.from(Number.class);
 	public final JavaClass<Integer> INTEGER = JavaClass.from(Integer.class);
 	public final JavaClass<Long> LONG = JavaClass.from(Long.class);
@@ -71,10 +72,14 @@ public class JavaTypeUtil {
 	public final JavaClass<LocalDateTime> LOCAL_DATE_TIME = JavaClass.from(LocalDateTime.class);
 	public final JavaClass<ZonedDateTime> ZONED_DATE_TIME = JavaClass.from(ZonedDateTime.class);
 	public final JavaClass<GlobalKey> GLOBAL_KEY = JavaClass.from(GlobalKey.class);
+	public final JavaClass<GlobalKeyFields> GLOBAL_KEY_FIELDS= JavaClass.from(GlobalKeyFields.class);
 	public final JavaClass<Templatable> TEMPLATABLE = JavaClass.from(Templatable.class);
 	public final JavaClass<Reference> REFERENCE = JavaClass.from(Reference.class);
 	public final JavaClass<MetaFields> META_FIELDS = JavaClass.from(MetaFields.class);
+	public final JavaClass<MetaDataFields> META_DATA_FIELDS = JavaClass.from(MetaDataFields.class);
 	public final JavaClass<MetaAndTemplateFields> META_AND_TEMPLATE_FIELDS = JavaClass.from(MetaAndTemplateFields.class);
+	
+	public final JavaPojoInterface META_FIELDS_JAVA_POJO = new RJavaMetaFields(this);
 	
 	public final JavaClass<Object> OBJECT = JavaClass.OBJECT;
 	public final JavaClass<Cloneable> CLONEABLE = JavaClass.CLONEABLE;
