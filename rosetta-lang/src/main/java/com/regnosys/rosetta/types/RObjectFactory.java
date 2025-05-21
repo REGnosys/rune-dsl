@@ -24,9 +24,11 @@ import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.xtext.EcoreUtil2;
 
+import com.regnosys.rosetta.cache.IRequestScopedCache;
 import com.regnosys.rosetta.rosetta.RosettaCardinality;
 import com.regnosys.rosetta.rosetta.RosettaEnumeration;
 import com.regnosys.rosetta.rosetta.RosettaFactory;
@@ -57,6 +59,8 @@ public class RObjectFactory {
 	private ModelIdProvider modelIdProvider;
 	@Inject
 	private RuleReferenceService ruleService;
+	@Inject
+	private IRequestScopedCache requestScopedCache;
 
 	public RFunction buildRFunction(Function function) {
 		return new RFunction(
@@ -222,7 +226,7 @@ public class RObjectFactory {
 	}
 
 	public RDataType buildRDataType(Data data) {
-		return new RDataType(data, modelIdProvider, this, typeProvider);
+		return requestScopedCache.get(Pair.of(data, this.getClass()), () -> new RDataType(data, modelIdProvider, this, typeProvider));
 	}
 	public RChoiceType buildRChoiceType(Choice choice) {
 		return new RChoiceType(choice, modelIdProvider, typeProvider, this);
