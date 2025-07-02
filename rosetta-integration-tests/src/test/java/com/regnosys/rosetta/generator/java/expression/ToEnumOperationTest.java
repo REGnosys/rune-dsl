@@ -21,6 +21,31 @@ public class ToEnumOperationTest {
     @Inject
     private RosettaTestModelService modelService;
     
+    
+    @Test
+    void enumToEnumWithSourceDisplayNameMatchingTargetOrdinalTest() {
+        JavaTestModel model = modelService.toJavaTestModel("""
+                namespace test
+                
+                enum Foo:
+                    BarValueOne
+                    BarValueTwo
+                    
+                enum Bar:
+                    VALUE1 displayName "BarValueOne"
+                    VALUE2 displayName "BarValueTwo"
+                """).compile();
+        
+        Enum<?> result = model.evaluateExpression(Enum.class, """
+                    Bar -> VALUE2 to-enum Foo
+                    """);
+        
+        var expected = model.getEnumJavaValue("Foo", "BarValueTwo");
+        
+        assertNotNull(result);
+        assertEquals(expected, result);
+    }
+    
     @Test
     void enumToEnumWithSourceAndTargetDisplayNameTest() {
         JavaTestModel model = modelService.toJavaTestModel("""
