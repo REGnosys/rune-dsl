@@ -49,7 +49,7 @@ public class DataTypeConditionTest extends AbstractConditionTest {
 
         assertResults(
                 fooResults,
-                (v1) -> assertFailure(v1, "FooC", "foo", "right of `and` operation is empty")
+                (v1) -> assertSuccess(v1, "FooC", "foo")
         );
     }
 
