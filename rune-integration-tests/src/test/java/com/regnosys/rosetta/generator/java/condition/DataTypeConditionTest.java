@@ -21,7 +21,7 @@ public class DataTypeConditionTest extends AbstractConditionTest {
 	private RosettaTestModelService testModelService;
 
     @Test
-    void thenExpressionWithAndThatResolvesFalseIsFailure() {
+    void thenExpressionWithAndThatResolvesFalseIsSuccess() {
         JavaTestModel model = testModelService.toJavaTestModel("""
 				type Bar:
 				    barValue int (1..1)
