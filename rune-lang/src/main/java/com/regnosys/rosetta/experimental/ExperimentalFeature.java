@@ -3,7 +3,8 @@ package com.regnosys.rosetta.experimental;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ExperimentalFeature {
-    SCOPES("scopes");
+    SCOPES("scopes"),
+    EMPTY_EVALUATES_FALSE("emptyEvaluatesFalse");
 
     private final String featureName;
 

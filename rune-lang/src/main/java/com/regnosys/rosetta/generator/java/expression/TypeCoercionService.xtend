@@ -24,6 +24,8 @@ import java.util.stream.Collectors
 import com.regnosys.rosetta.generator.java.statement.builder.JavaLiteral
 import jakarta.inject.Inject
 import com.regnosys.rosetta.generator.java.scoping.JavaStatementScope
+import com.regnosys.rosetta.experimental.ExperimentalFeatureService
+import com.regnosys.rosetta.experimental.ExperimentalFeature
 
 /**
  * This service is responsible for coercing an expression from its actual Java type to an `expected` Java type.
@@ -60,6 +62,7 @@ import com.regnosys.rosetta.generator.java.scoping.JavaStatementScope
  */
 class TypeCoercionService {
 	@Inject extension JavaTypeUtil typeUtil
+	@Inject ExperimentalFeatureService experimentalFeatureService
 	
 	def JavaStatementBuilder addCoercions(JavaStatementBuilder expr, JavaType expected, JavaStatementScope scope) {
 		addCoercions(expr, expected, true, scope)
@@ -377,7 +380,10 @@ class TypeCoercionService {
 		} else if (expected.isMapperC) {
 			JavaExpression.from('''«MapperC».<«itemType»>ofNull()''', MAPPER_C.wrap(itemType))
 		} else if (expected.isComparisonResult) {
-			JavaExpression.from('''«ComparisonResult».ofEmpty()''', COMPARISON_RESULT)
+			if (experimentalFeatureService.isEnabled(ExperimentalFeature.EMPTY_EVALUATES_FALSE)) {
+				return JavaExpression.from('''«ComparisonResult».ofEmpty()''', COMPARISON_RESULT)
+			}
+			JavaExpression.from('''«ComparisonResult».successEmptyOperand("")''', COMPARISON_RESULT)
 		} else if (expected == JavaPrimitiveType.BOOLEAN) {
 			JavaExpression.from('''false''', JavaPrimitiveType.BOOLEAN)
 		} else if (expected instanceof RJavaWithMetaValue) {
