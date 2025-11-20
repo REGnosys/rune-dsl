@@ -22,7 +22,7 @@ public class ExpressionEqualityUtilTest {
         MapperC<Number> m1 = MapperC.of(Arrays.asList(1, 2, 3));
         MapperC<Number> m2 = MapperC.of(Arrays.asList(BigDecimal.ONE, BigDecimal.valueOf(2), BigDecimal.valueOf(3)));
 
-        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All);
+        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All, false);
         assertTrue(res.get());
     }
 
@@ -31,7 +31,7 @@ public class ExpressionEqualityUtilTest {
         MapperC<Number> m1 = MapperC.of(Arrays.asList(1, 9));
         MapperC<Number> m2 = MapperC.of(Arrays.asList(2, 9));
 
-        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.Any);
+        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.Any, false);
         assertTrue(res.get());
     }
 
@@ -40,7 +40,7 @@ public class ExpressionEqualityUtilTest {
         MapperC<Number> m1 = MapperC.of(Arrays.asList(1, 2, 4));
         MapperC<Number> m2 = MapperC.of(Arrays.asList(1, 2, 3));
 
-        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All);
+        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All, false);
         assertFalse(res.get());
     }
 
@@ -49,7 +49,7 @@ public class ExpressionEqualityUtilTest {
         MapperC<Number> m1 = MapperC.of(Arrays.asList(1, 2));
         MapperC<Number> m2 = MapperC.of(Arrays.asList(3, 4));
 
-        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.Any);
+        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.Any, false);
         assertFalse(res.get());
     }
 
@@ -58,7 +58,7 @@ public class ExpressionEqualityUtilTest {
         MapperC<Integer> m1 = MapperC.of(Collections.emptyList());
         MapperC<Integer> m2 = MapperC.of(Arrays.asList(1, 2));
 
-        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All);
+        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All, false);
         assertFalse(res.get());
     }
 
@@ -67,7 +67,7 @@ public class ExpressionEqualityUtilTest {
         MapperC<Integer> m1 = MapperC.of(Arrays.asList(1, 2, 3));
         MapperC<Integer> m2 = MapperC.of(Arrays.asList(1, 2));
 
-        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All);
+        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All, false);
         assertFalse(res.get());
     }
 
@@ -78,7 +78,7 @@ public class ExpressionEqualityUtilTest {
         MapperC<ZonedDateTime> m1 = MapperC.of(Collections.singletonList(z1));
         MapperC<ZonedDateTime> m2 = MapperC.of(Collections.singletonList(z2));
 
-        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All);
+        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All, false);
         assertTrue(res.get());
     }
 
@@ -87,7 +87,7 @@ public class ExpressionEqualityUtilTest {
         MapperC<String> m1 = MapperC.of(Arrays.asList(null, "b"));
         MapperC<String> m2 = MapperC.of(Arrays.asList(null, "b"));
 
-        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All);
+        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All, false);
         assertTrue(res.get());
     }
 
@@ -96,7 +96,7 @@ public class ExpressionEqualityUtilTest {
         MapperC<Integer> m1 = MapperC.of(Arrays.asList(5, 5, 5));
         MapperS<Number> m2 = MapperS.of(BigDecimal.valueOf(5));
 
-        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All);
+        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All, false);
         assertTrue(res.get());
     }
 
@@ -105,7 +105,7 @@ public class ExpressionEqualityUtilTest {
         MapperC<Integer> m1 = MapperC.of(Arrays.asList(5, 6, 5));
         MapperS<Integer> m2 = MapperS.of(5);
 
-        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All);
+        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All, false);
         assertFalse(res.get());
     }
 
@@ -114,7 +114,7 @@ public class ExpressionEqualityUtilTest {
         MapperC<Integer> m1 = MapperC.of(Arrays.asList(4, 6, 5));
         MapperS<Integer> m2 = MapperS.of(5);
 
-        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.Any);
+        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.Any, false);
         assertTrue(res.get());
     }
 
@@ -123,7 +123,7 @@ public class ExpressionEqualityUtilTest {
         MapperC<Integer> m1 = MapperC.of(Arrays.asList(1, 2, 3));
         MapperS<Integer> m2 = MapperS.of(9);
 
-        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.Any);
+        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.Any, false);
         assertFalse(res.get());
     }
 
@@ -132,7 +132,7 @@ public class ExpressionEqualityUtilTest {
         MapperC<Integer> m1 = MapperC.of(Collections.emptyList());
         MapperS<Integer> m2 = MapperS.of(1);
 
-        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All);
+        ComparisonResult res = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.All, false);
         assertFalse(res.get());
     }
 
@@ -141,13 +141,13 @@ public class ExpressionEqualityUtilTest {
         MapperC<String> m1 = MapperC.of(Arrays.asList(null, "x", "y"));
         MapperS<String> m2 = MapperS.of("x");
 
-        ComparisonResult resAny = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.Any);
+        ComparisonResult resAny = ExpressionEqualityUtil.areEqual(m1, m2, CardinalityOperator.Any, false);
         assertTrue(resAny.get());
 
         MapperC<String> m3 = MapperC.of(Arrays.asList("x", "x"));
         MapperS<String> m4 = MapperS.of("x");
 
-        ComparisonResult resAll = ExpressionEqualityUtil.areEqual(m3, m4, CardinalityOperator.All);
+        ComparisonResult resAll = ExpressionEqualityUtil.areEqual(m3, m4, CardinalityOperator.All, false);
         assertTrue(resAll.get());
     }
 
@@ -156,7 +156,7 @@ public class ExpressionEqualityUtilTest {
         ComparisonResult left = ComparisonResult.success();
         MapperC<Integer> right = MapperC.of(Collections.singletonList(1));
 
-        ComparisonResult res = ExpressionEqualityUtil.areEqual(left, right, CardinalityOperator.All);
+        ComparisonResult res = ExpressionEqualityUtil.areEqual(left, right, CardinalityOperator.All, false);
         assertFalse(res.get());
         assertFalse(res.isEmptyOperand());
     }

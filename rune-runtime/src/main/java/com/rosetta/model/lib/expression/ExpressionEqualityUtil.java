@@ -42,12 +42,13 @@ class ExpressionEqualityUtil {
 	
 	/**
 	 * Checks that all items in the given mappers are equal.
-	 * @param m1
+	 * @param emptyIsFalseFeatureEnabled
+     * @param m1
 	 * @param m2
 	 * @return result of equality comparison, with error messages if failure
 	 */
 	@SuppressWarnings("unchecked")
-	static <T, U> ComparisonResult areEqual(Mapper<T> m1, Mapper<U> m2, CardinalityOperator o) {
+	static <T, U> ComparisonResult areEqual(Mapper<T> m1, Mapper<U> m2, CardinalityOperator o, boolean emptyIsFalseFeatureEnabled) {
 		if (m1 instanceof ComparisonResult) {
 			m1 = (Mapper<T>) ((ComparisonResult) m1).asMapper();
 		}
@@ -56,7 +57,7 @@ class ExpressionEqualityUtil {
 		}
 					
 		if(m1.getClass().equals(m2.getClass())) {
-			return areEqualSame(m1, (Mapper<T>)m2, o);
+			return areEqualSame(m1, (Mapper<T>)m2, o, emptyIsFalseFeatureEnabled);
 		}
 		else if(m1 instanceof MapperS) {
 			return areEqualDifferent((MapperC<U>)m2, (MapperS<T>)m1, o);
@@ -66,7 +67,7 @@ class ExpressionEqualityUtil {
 		}
 	}
 	
-	private static <T> ComparisonResult areEqualSame(Mapper<T> m1, Mapper<T> m2, CardinalityOperator o) {
+	private static <T> ComparisonResult areEqualSame(Mapper<T> m1, Mapper<T> m2, CardinalityOperator o, boolean emptyIsFalseFeatureEnabled) {
 		List<T> multi1 = m1.getMulti();
 		List<T> multi2 = m2.getMulti();
 		
@@ -74,7 +75,7 @@ class ExpressionEqualityUtil {
 		ListIterator<T> e2 = multi2.listIterator();
 		
 		if (multi1.isEmpty() || multi2.isEmpty()) {
-            if (multi1.isEmpty() && multi2.isEmpty()) {
+            if (emptyIsFalseFeatureEnabled && multi1.isEmpty() && multi2.isEmpty()) {
                 return ComparisonResult.success();
             }
             return ComparisonResult.failure(formatEqualsComparisonResultError(m1) + " cannot be compared to " + formatEqualsComparisonResultError(m2));

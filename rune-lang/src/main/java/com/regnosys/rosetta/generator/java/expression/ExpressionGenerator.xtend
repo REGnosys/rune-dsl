@@ -1,7 +1,10 @@
 package com.regnosys.rosetta.generator.java.expression
 
 import com.regnosys.rosetta.RosettaEcoreUtil
+import com.regnosys.rosetta.experimental.ExperimentalFeatureService
+import com.regnosys.rosetta.generator.GeneratedIdentifier
 import com.regnosys.rosetta.generator.GenerationException
+import com.regnosys.rosetta.generator.java.function.AliasUtil
 import com.regnosys.rosetta.generator.java.scoping.JavaIdentifierRepresentationService
 import com.regnosys.rosetta.generator.java.scoping.JavaStatementScope
 import com.regnosys.rosetta.generator.java.statement.JavaLocalVariableDeclarationStatement
@@ -76,6 +79,7 @@ import com.regnosys.rosetta.rosetta.expression.RosettaNumberLiteral
 import com.regnosys.rosetta.rosetta.expression.RosettaOnlyElement
 import com.regnosys.rosetta.rosetta.expression.RosettaOnlyExistsExpression
 import com.regnosys.rosetta.rosetta.expression.RosettaStringLiteral
+import com.regnosys.rosetta.rosetta.expression.RosettaSuperCall
 import com.regnosys.rosetta.rosetta.expression.RosettaSymbolReference
 import com.regnosys.rosetta.rosetta.expression.RosettaUnaryOperation
 import com.regnosys.rosetta.rosetta.expression.SortOperation
@@ -149,22 +153,7 @@ import static com.regnosys.rosetta.generator.java.types.JavaPojoPropertyOperatio
 import static extension com.regnosys.rosetta.generator.java.enums.EnumHelper.convertValue
 import static extension com.regnosys.rosetta.types.RMetaAnnotatedType.withNoMeta
 import static extension com.regnosys.rosetta.utils.PojoPropertyUtil.*
-import com.rosetta.model.lib.meta.Reference
-import com.regnosys.rosetta.generator.java.types.JavaPojoInterface
-import com.regnosys.rosetta.rosetta.RosettaTypeWithConditions
-import com.regnosys.rosetta.rosetta.TypeParameter
-import com.regnosys.rosetta.generator.java.statement.builder.JavaLiteral
-import com.regnosys.rosetta.generator.java.types.RJavaPojoInterface
-import com.regnosys.rosetta.generator.GenerationException
-import com.regnosys.rosetta.types.builtin.RBuiltinTypeService
-import com.regnosys.rosetta.generator.java.scoping.JavaIdentifierRepresentationService
-import com.regnosys.rosetta.generator.java.scoping.JavaStatementScope
-import static com.regnosys.rosetta.generator.java.types.JavaPojoPropertyOperationType.*
-import com.rosetta.util.types.JavaClass
-import com.regnosys.rosetta.generator.java.expression.ExpressionGenerator.Context
-import com.regnosys.rosetta.generator.java.function.AliasUtil
-import com.regnosys.rosetta.generator.GeneratedIdentifier
-import com.regnosys.rosetta.rosetta.expression.RosettaSuperCall
+import com.regnosys.rosetta.experimental.ExperimentalFeature
 
 class ExpressionGenerator extends RosettaExpressionSwitch<JavaStatementBuilder, ExpressionGenerator.Context> {
 	
@@ -206,6 +195,7 @@ class ExpressionGenerator extends RosettaExpressionSwitch<JavaStatementBuilder, 
 	@Inject extension JavaTypeUtil typeUtil
 	@Inject extension RObjectFactory
 	@Inject RBuiltinTypeService builtinTypeService
+	@Inject ExperimentalFeatureService experimentalFeatureService
 
 	/**
 	 * convert a rosetta expression to code
@@ -498,8 +488,9 @@ class ExpressionGenerator extends RosettaExpressionSwitch<JavaStatementBuilder, 
 				}
 				val leftCode = javaCode(left, context.withExpected(MAPPER.wrapExtends(joinedWithoutMeta)))
 				val rightCode = javaCode(right, context.withExpected(MAPPER.wrapExtends(joinedWithoutMeta)))
+				val emptyIsFalseFeatureEnabled = experimentalFeatureService.isEnabled(ExperimentalFeature.EMPTY_EVALUATES_FALSE);
 				leftCode
-					.then(rightCode, [l, r|JavaExpression.from('''«runtimeMethod(method)»(«l», «r», «toCardinalityOperator(modifier, defaultModifier)»)''', COMPARISON_RESULT)], context.scope)
+					.then(rightCode, [l, r|JavaExpression.from('''«runtimeMethod(method)»(«l», «r», «toCardinalityOperator(modifier, defaultModifier)»«IF method === "areEqual"», «emptyIsFalseFeatureEnabled»«ENDIF»)''', COMPARISON_RESULT)], context.scope)
 			}
 			default:
 				throw new UnsupportedOperationException("Unsupported binary operation of " + expr.operator)

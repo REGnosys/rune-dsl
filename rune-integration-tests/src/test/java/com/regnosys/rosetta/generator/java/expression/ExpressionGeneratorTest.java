@@ -156,7 +156,7 @@ public class ExpressionGeneratorTest {
         import com.rosetta.model.lib.mapper.MapperS;
 
 
-        return ComparisonResult.ofEmpty().or(ComparisonResult.of(MapperS.of(false))).get();
+        return ComparisonResult.successEmptyOperand("").or(ComparisonResult.of(MapperS.of(false))).get();
         """;
 
         assertJavaCode(expected, expr, Boolean.class);
@@ -360,7 +360,7 @@ public class ExpressionGeneratorTest {
         
         {
             Foo foo;
-            return areEqual(MapperS.of(foo).<BigDecimal>map("getAttr1", _foo -> _foo.getAttr1()), MapperS.of(foo).<BigDecimal>map("getAttr2", _foo -> _foo.getAttr2()), CardinalityOperator.All).or(areEqual(MapperS.of(foo).<String>map("getAttr3", _foo -> _foo.getAttr3()), MapperS.of(foo).<String>map("getAttr4", _foo -> _foo.getAttr4()), CardinalityOperator.All));
+            return areEqual(MapperS.of(foo).<BigDecimal>map("getAttr1", _foo -> _foo.getAttr1()), MapperS.of(foo).<BigDecimal>map("getAttr2", _foo -> _foo.getAttr2()), CardinalityOperator.All, false).or(areEqual(MapperS.of(foo).<String>map("getAttr3", _foo -> _foo.getAttr3()), MapperS.of(foo).<String>map("getAttr4", _foo -> _foo.getAttr4()), CardinalityOperator.All, false));
         }
         """;
 

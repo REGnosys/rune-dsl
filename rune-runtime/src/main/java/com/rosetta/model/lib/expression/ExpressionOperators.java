@@ -237,11 +237,15 @@ public class ExpressionOperators {
 	}
 	
 	// areEqual
-	
+
 	public static <T, U> ComparisonResult areEqual(Mapper<T> m1, Mapper<U> m2, CardinalityOperator o) {
-		return ExpressionEqualityUtil.evaluate(m1, m2, o, ExpressionEqualityUtil::areEqual);
+		return areEqual(m1, m2, o, false);
 	}
-	
+
+    public static <T, U> ComparisonResult areEqual(Mapper<T> m1, Mapper<U> m2, CardinalityOperator o, boolean emptyIsFalseFeatureEnabled) {
+        return ExpressionEqualityUtil.evaluate(m1, m2, o, (m3, m4, o1) -> ExpressionEqualityUtil.areEqual(m3, m4, o1, emptyIsFalseFeatureEnabled));
+    }
+
 	// notEqual
 		
 	public static <T, U> ComparisonResult notEqual(Mapper<T> m1, Mapper<U> m2, CardinalityOperator o) {

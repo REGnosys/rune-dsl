@@ -283,7 +283,7 @@ class RosettaBinaryOperationTest {
 		val foo = RosettaModelObject.cast(classes.createInstanceUsingBuilder('Foo', of('baz', baz), of()))
 		
 		assertResult("FeatureCallEqualToLiteral", foo, false)
-		assertResult("FeatureCallEqualToFeatureCall", foo, true)
+		assertResult("FeatureCallEqualToFeatureCall", foo, false)
 		assertResult("FeatureCallNotEqualToLiteral", foo, true)
 		assertResult("FeatureCallNotEqualToFeatureCall", foo, true)
 		assertResult("FeatureCallListEqualToFeatureCall", foo, false)
@@ -387,7 +387,7 @@ class RosettaBinaryOperationTest {
 						}
 						
 						protected Boolean assignOutput(Boolean result, Foo foo) {
-							result = ComparisonResult.of(MapperS.of(foo).<Boolean>map("getAttrBoolean", _foo -> _foo.getAttrBoolean())).or(areEqual(MapperS.of(foo).<BigDecimal>map("getAttrNumber", _foo -> _foo.getAttrNumber()), MapperS.of(BigDecimal.valueOf(5)), CardinalityOperator.All)).get();
+							result = ComparisonResult.of(MapperS.of(foo).<Boolean>map("getAttrBoolean", _foo -> _foo.getAttrBoolean())).or(areEqual(MapperS.of(foo).<BigDecimal>map("getAttrNumber", _foo -> _foo.getAttrNumber()), MapperS.of(BigDecimal.valueOf(5)), CardinalityOperator.All, false)).get();
 							
 							return result;
 						}
