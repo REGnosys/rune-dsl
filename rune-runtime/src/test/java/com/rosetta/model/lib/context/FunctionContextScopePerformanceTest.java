@@ -1,16 +1,12 @@
 package com.rosetta.model.lib.context;
 
 import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.rosetta.model.lib.context.example.One;
-import com.rosetta.model.lib.context.example.ScopeA;
-import com.rosetta.model.lib.context.example.ScopeB;
-import com.rosetta.model.lib.context.example.Two;
-import org.junit.jupiter.api.BeforeEach;
+import com.rosetta.model.lib.context.examplescope.One;
+import com.rosetta.model.lib.context.examplescope.ScopeA;
+import com.rosetta.model.lib.context.examplescope.ScopeB;
+import com.rosetta.model.lib.context.examplescope.Two;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-
-import javax.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -22,18 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * or {@code mvn clean install}.
  */
 @Tag("performance")
-public class FunctionContextStatePerformanceTest {
-    @Inject
-    private ScopeA scopeA;
-    @Inject
-    private ScopeB scopeB;
-
-    @BeforeEach
-    void setup() {
-        Injector injector = Guice.createInjector();
-        injector.injectMembers(this);
-    }
-
+public class FunctionContextScopePerformanceTest {
     @Test
     void testPerformanceForADeepScopeStack() {
         // Test that deep scopes don't degrade performance significantly
@@ -42,17 +27,17 @@ public class FunctionContextStatePerformanceTest {
 
         final int ITERATIONS = 10000;
         final int SHALLOW_DEPTH = 10;
-        final int DEEP_DEPTH = 100;
+        final int DEEP_DEPTH = 1000000;
 
         // Shallow stack
-        FunctionContextState shallowContextState = createStateWithDepth(SHALLOW_DEPTH);
+        FunctionContext shallowContext = createContextWithDepth(SHALLOW_DEPTH);
 
         // Deep stack
-        FunctionContextState deepContextState = createStateWithDepth(DEEP_DEPTH);
+        FunctionContext deepContext = createContextWithDepth(DEEP_DEPTH);
 
         // Measure first-run performance (no JIT warmup - simulates real usage)
-        long shallowMs = runBenchmark(shallowContextState, ITERATIONS);
-        long deepMs = runBenchmark(deepContextState, ITERATIONS);
+        long shallowMs = runBenchmark(shallowContext, ITERATIONS);
+        long deepMs = runBenchmark(deepContext, ITERATIONS);
 
         System.out.println("Performance test (first-run, no JIT warmup):");
         System.out.println("  Shallow (depth " + SHALLOW_DEPTH + "): " + shallowMs + "ms for " + ITERATIONS + " lookups");
@@ -67,19 +52,19 @@ public class FunctionContextStatePerformanceTest {
                             + "x slower than shallow - suggests O(n) behavior";
     }
     
-    private FunctionContextState createStateWithDepth(int depth) {
-        FunctionContextState state = FunctionContextState.empty();
+    private FunctionContext createContextWithDepth(int depth) {
+        FunctionContext context = FunctionContextImpl.create(Guice.createInjector());
         for (int i = 0; i < depth; i++) {
-            state.pushScope(i % 2 == 0 ? scopeA : scopeB);
+            context.pushScope(i % 2 == 0 ? ScopeA.class : ScopeB.class);
         }
-        return state;
+        return context;
     }
 
-    private long runBenchmark(FunctionContextState state, int iterations) {
+    private long runBenchmark(FunctionContext context, int iterations) {
         long start = System.nanoTime();
         for (int i = 0; i < iterations; i++) {
-            Class<? extends One> one = state.getOverride(One.class);
-            Class<? extends Two> two = state.getOverride(Two.class);
+            One one = context.getInstance(One.class);
+            Two two = context.getInstance(Two.class);
             assertNotNull(one);
             assertNotNull(two);
         }

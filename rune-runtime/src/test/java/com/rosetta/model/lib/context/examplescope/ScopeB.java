@@ -1,4 +1,4 @@
-package com.rosetta.model.lib.context.example;
+package com.rosetta.model.lib.context.examplescope;
 
 import com.rosetta.model.lib.context.AbstractFunctionScope;
 

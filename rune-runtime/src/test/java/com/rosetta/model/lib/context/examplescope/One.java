@@ -1,4 +1,4 @@
-package com.rosetta.model.lib.context.example;
+package com.rosetta.model.lib.context.examplescope;
 
 public class One {
     public int evaluate() {

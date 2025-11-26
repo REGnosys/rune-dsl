@@ -1,76 +1,144 @@
 package com.rosetta.model.lib.context;
 
 import com.google.inject.Injector;
+import com.rosetta.model.lib.RosettaModelObjectBuilder;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
-/**
- * Implementation of {@link FunctionContext} that maintains a stack of scopes with cached resolved overrides.
- * <p>
- * This implementation optimizes {@link #getInstance(Class)} to O(1) time complexity (with respect to the depth of the scope stack)
- * by maintaining a cache of resolved class overrides at each scope level. When a scope is entered, the cache is computed
- * by applying that scope's overrides to the parent scope's cache. When a scope is exited, the parent's
- * cache is automatically restored by popping the stack.
- */
-@Singleton
 public class FunctionContextImpl implements FunctionContext {
-    private final ThreadLocal<FunctionContextState> statePerThread = ThreadLocal.withInitial(FunctionContextState::empty);
     private final Injector injector;
+    private final FunctionContextImpl parentContext;
     
-    @Inject
-    public FunctionContextImpl(Injector injector) {
+    private List<FunctionScope> scopeStack = null;
+    private Map<Class<?>, Class<?>> overridesCache = null;
+    private Map<Class<? extends RosettaModelObjectBuilder>, RosettaModelObjectBuilder> arguments = null;
+
+    public static FunctionContextImpl create(Injector injector) {
+        return new FunctionContextImpl(injector, null);
+    }
+    
+    private FunctionContextImpl(Injector injector, FunctionContextImpl parentContext) {
         this.injector = injector;
+        this.parentContext = parentContext;
+    }
+    
+    @Override
+    public FunctionContextImpl child() {
+        return new FunctionContextImpl(injector, this);
     }
 
     @Override
-    public void runInScope(Class<? extends FunctionScope> scopeClass, Runnable runnable) {
-        if (!pushScope(scopeClass)) {
-            runnable.run();
-            return;
-        }
-        try {
-            runnable.run();
-        } finally {
-            popScope();
-        }
+    public FunctionContextImpl copy() {
+        FunctionContextImpl copy = new FunctionContextImpl(injector, parentContext == null ? null : parentContext.copy());
+        copy.scopeStack = scopeStack == null ? null : new ArrayList<>(scopeStack);
+        copy.overridesCache = overridesCache == null ? null : new HashMap<>(overridesCache);
+        copy.arguments = arguments == null ? null : new HashMap<>(arguments);
+        return copy;
     }
 
     @Override
-    public <T> T evaluateInScope(Class<? extends FunctionScope> scopeClass, Supplier<T> supplier) {
-        if (!pushScope(scopeClass)) {
-            return supplier.get();
-        };
-        try {
-            return supplier.get();
-        } finally {
-            popScope();
+    public void pushScope(Class<? extends FunctionScope> scopeClass) {
+        FunctionScope scope = injector.getInstance(scopeClass);
+        if (scopeStack == null) {
+            scopeStack = new ArrayList<>();
+            overridesCache = new HashMap<>();
         }
+        scopeStack.add(scope);
+        overridesCache.clear();
     }
 
     @Override
     public <T> T getInstance(Class<T> clazz) {
-        Class<? extends T> resolvedClass = statePerThread.get().getOverride(clazz);
+        Class<? extends T> resolvedClass = resolveOverride(clazz);
         return injector.getInstance(resolvedClass);
     }
 
-    @Override
-    public FunctionContextState copyStateOfCurrentThread() {
-        return statePerThread.get().copy();
+    @SuppressWarnings("unchecked")
+    private <T> Class<? extends T> resolveOverride(Class<T> clazz) {
+        if (overridesCache == null) {
+            return parentContext == null ? clazz : parentContext.resolveOverride(clazz);
+        };
+        return (Class<? extends T>) overridesCache.computeIfAbsent(clazz, key -> {
+           Class<? extends T> result = parentContext == null ? clazz : parentContext.resolveOverride(clazz);
+           for (FunctionScope scope : scopeStack) {
+               result = scope.getOverride(result);
+           }
+           return result;
+        });
     }
 
     @Override
-    public void setStateOfCurrentThread(FunctionContextState state) {
-        statePerThread.set(state);
+    @SuppressWarnings("unchecked")
+    public <T extends RosettaModelObjectBuilder> T getArgument(Class<T> clazz) {
+        if (arguments != null) {
+            T ownArgument = (T) arguments.get(clazz);
+            if (ownArgument != null) {
+                return ownArgument;
+            }
+        }
+        if (parentContext == null) {
+            return null;
+        }
+        T parentArgument = parentContext.getArgumentOrNull(clazz);
+        if (parentArgument == null) {
+            return null;
+        }
+        T initialValue = copy(parentArgument);
+        checkType(clazz, initialValue);
+        if (arguments == null) {
+            arguments = new HashMap<>();
+        }
+        arguments.put(clazz, initialValue);
+        return initialValue;
     }
 
-    private boolean pushScope(Class<? extends FunctionScope> scopeClass) {
-        FunctionScope scope = injector.getInstance(scopeClass);
-        return statePerThread.get().pushScope(scope);
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends RosettaModelObjectBuilder> T getArgument(Class<T> clazz, Supplier<T> initialValue) {
+        if (arguments == null) {
+            arguments = new HashMap<>();
+        }
+        return (T) arguments.computeIfAbsent(clazz, key -> {
+            T initial = parentContext == null ? null : parentContext.getArgumentOrNull(clazz);
+            if (initial == null) {
+                initial = initialValue.get();
+            } else {
+                initial = copy(initial);
+            }
+            checkType(clazz, initial);
+            return initial;
+        });
+    }
+    @SuppressWarnings("unchecked")
+    private <T extends RosettaModelObjectBuilder> T getArgumentOrNull(Class<T> clazz) {
+        T ownArgument = arguments == null ? null : (T) arguments.get(clazz);
+        if (ownArgument == null) {
+            return parentContext == null ? null : parentContext.getArgumentOrNull(clazz);
+        }
+        return ownArgument;
+    }
+
+    @Override
+    public <T extends RosettaModelObjectBuilder> void setArgument(Class<T> clazz, T value) {
+        checkType(clazz, value);
+        if (arguments == null) {
+            arguments = new HashMap<>();
+        }
+        arguments.put(clazz, value);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends RosettaModelObjectBuilder> T copy(T instance) {
+        return (T) instance.build().toBuilder();
     }
     
-    private void popScope() {
-        statePerThread.get().popScope();
+    private <T> void checkType(Class<T> clazz, T arg) {
+        if (!clazz.isInstance(arg)) {
+            throw new IllegalArgumentException("Argument " + arg + " is not an instance of " + clazz);
+        }
     }
 }
