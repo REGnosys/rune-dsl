@@ -11,8 +11,8 @@ public class B {
 
     public int evaluate() {
         return contextAccess.evaluate(ctx -> {
+            ctx.getArgument(MyContext.MyContextBuilder.class, MyContext.MyContextBuilder::new).setValue(2 * MapperS.of(ctx.getArgument(MyContext.MyContextBuilder.class)).map("value", MyContext::getValue).getOrDefault(0));
             int result = MapperS.of(ctx.getArgument(MyContext.MyContextBuilder.class)).map("value", MyContext::getValue).getOrDefault(0);
-            ctx.getArgument(MyContext.MyContextBuilder.class, MyContext.MyContextBuilder::new).setValue(2 * result);
             return result;
         });
     }

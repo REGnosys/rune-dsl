@@ -22,6 +22,6 @@ public class FunctionContextArgumentTest {
     
     @Test
     void testArgument() {
-        assertEquals(2, a.evaluate());
+        assertEquals(3, a.evaluate());
     }
 }
