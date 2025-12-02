@@ -1,15 +1,18 @@
-package com.rosetta.model.lib.context.example;
+package com.rosetta.model.lib.context.examplescope;
 
 import com.rosetta.model.lib.context.ContextAwareProvider;
 
 import javax.inject.Inject;
 
-public class Two {
+public class Three {
     @Inject
     private ContextAwareProvider<One> oneProvider;
+    @Inject
+    private ContextAwareProvider<Two> twoProvider;
     
     public int evaluate() {
         One one = oneProvider.get();
-        return 2 * one.evaluate();
+        Two two = twoProvider.get();
+        return one.evaluate() + two.evaluate();
     }
 }
