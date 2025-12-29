@@ -304,8 +304,22 @@ public class ExpressionOperatorsNullSafe {
 	// distinct
 	
 	public static <T> MapperC<T> distinct(Mapper<T> o) {
+		List<T> collect = o.getMulti()
+				.stream()
+				.map(ExpressionOperatorsNullSafe::stripTrailingZerosIfBigDecimal)
+				.distinct()
+				.collect(Collectors.toList());
+		return MapperC.of(collect);
+	}
+
+	private static <T> T stripTrailingZerosIfBigDecimal(T x) {
+		return x instanceof BigDecimal ? ((T) ((BigDecimal) x).stripTrailingZeros()) : x;
+	}
+
+	public static MapperC<BigDecimal> distinctNumber(Mapper<BigDecimal> o) {
 		return MapperC.of(o.getMulti()
 				.stream()
+				.map(BigDecimal::stripTrailingZeros)
 				.distinct()
 				.collect(Collectors.toList()));
 	}
