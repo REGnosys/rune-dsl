@@ -2,9 +2,9 @@ package com.rosetta.model.lib.context;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.rosetta.model.lib.context.example.Three;
-import com.rosetta.model.lib.context.example.ThreeInScopeA;
-import com.rosetta.model.lib.context.example.ThreeInScopeB;
+import com.rosetta.model.lib.context.examplescope.Three;
+import com.rosetta.model.lib.context.examplescope.ThreeInScopeA;
+import com.rosetta.model.lib.context.examplescope.ThreeInScopeB;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +12,7 @@ import javax.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class FunctionContextTest {
+public class FunctionContextScopeTest {
     @Inject
     private Three three;
     @Inject
