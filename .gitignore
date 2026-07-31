@@ -12,8 +12,11 @@ Thumbs.db
 plugin.xml_gen
 **/*.iml
 .classpath
+.project
 rune-profiling/dependency-reduced-pom.xml
 rune-profiling/reports/
+.junie
+.claude/plans
 
 **/.settings
 **/src-gen/
@@ -32,6 +35,10 @@ com.regnosys.rosetta.web/
 .idea/
 .vscode/
 *.swp
+
+# Python
+__pycache__/
+*.pyc
 
 # Docusaurus website
 website/.docusaurus

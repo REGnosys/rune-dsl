@@ -16,29 +16,23 @@
 
 package com.regnosys.rosetta.ide.server;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
+import com.regnosys.rosetta.config.file.RuneConfigurationFileProvider;
+import com.regnosys.rosetta.formatting2.FormattingOptionsService;
+import com.regnosys.rosetta.ide.inlayhints.IInlayHintsResolver;
+import com.regnosys.rosetta.ide.inlayhints.IInlayHintsService;
+import com.regnosys.rosetta.ide.overrides.IParentsService;
+import com.regnosys.rosetta.ide.overrides.ParentsParams;
+import com.regnosys.rosetta.ide.overrides.ParentsResult;
+import com.regnosys.rosetta.ide.quickfix.IResolveCodeActionService;
+import com.regnosys.rosetta.ide.semantictokens.ISemanticTokensService;
+import com.regnosys.rosetta.ide.semantictokens.SemanticToken;
+import com.regnosys.rosetta.ide.serializer.SerializerWarmUpService;
+import com.regnosys.rosetta.ide.util.CodeActionUtils;
+import com.regnosys.rosetta.utils.RuneConfigurationHolder;
+import com.regnosys.rosetta.validation.RosettaIssueCodes;
 import jakarta.inject.Inject;
-
 import org.eclipse.emf.common.util.URI;
-import org.eclipse.lsp4j.CodeAction;
-import org.eclipse.lsp4j.CodeActionParams;
-import org.eclipse.lsp4j.Diagnostic;
-import org.eclipse.lsp4j.DiagnosticSeverity;
-import org.eclipse.lsp4j.DiagnosticTag;
-import org.eclipse.lsp4j.DidChangeWatchedFilesParams;
-import org.eclipse.lsp4j.DidChangeWatchedFilesRegistrationOptions;
-import org.eclipse.lsp4j.FileSystemWatcher;
-import org.eclipse.lsp4j.FormattingOptions;
-import org.eclipse.lsp4j.InlayHint;
-import org.eclipse.lsp4j.InlayHintParams;
-import org.eclipse.lsp4j.SemanticTokens;
-import org.eclipse.lsp4j.SemanticTokensDelta;
-import org.eclipse.lsp4j.SemanticTokensDeltaParams;
-import org.eclipse.lsp4j.SemanticTokensParams;
-import org.eclipse.lsp4j.SemanticTokensRangeParams;
+import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.xtext.ide.server.Document;
 import org.eclipse.xtext.ide.server.ILanguageServerAccess;
@@ -49,18 +43,11 @@ import org.eclipse.xtext.resource.XtextResource;
 import org.eclipse.xtext.util.CancelIndicator;
 import org.eclipse.xtext.validation.Issue;
 
-import com.regnosys.rosetta.formatting2.FormattingOptionsService;
-import com.regnosys.rosetta.ide.inlayhints.IInlayHintsResolver;
-import com.regnosys.rosetta.ide.inlayhints.IInlayHintsService;
-import com.regnosys.rosetta.validation.RosettaIssueCodes;
-import com.regnosys.rosetta.ide.overrides.IParentsService;
-import com.regnosys.rosetta.ide.overrides.ParentsParams;
-import com.regnosys.rosetta.ide.overrides.ParentsResult;
-import com.regnosys.rosetta.ide.quickfix.IResolveCodeActionService;
-import com.regnosys.rosetta.ide.serializer.SerializerWarmUpService;
-import com.regnosys.rosetta.ide.semantictokens.ISemanticTokensService;
-import com.regnosys.rosetta.ide.semantictokens.SemanticToken;
-import com.regnosys.rosetta.ide.util.CodeActionUtils;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * TODO: contribute to Xtext.
@@ -69,7 +56,15 @@ import com.regnosys.rosetta.ide.util.CodeActionUtils;
 public class RosettaLanguageServerImpl extends LanguageServerImpl implements RosettaLanguageServer, RosettaTextDocumentService {
 	@Inject FormattingOptionsService formattingOptionsService;
 	@Inject CodeActionUtils codeActionUtils;
-	
+	@Inject RuneConfigurationHolder runeConfigurationHolder;
+
+	// The canonical config file names are owned by RuneConfigurationFileProvider; reuse them here
+	// rather than duplicating the literals.
+	private static final List<String> CONFIG_FILE_NAMES =
+			List.of(RuneConfigurationFileProvider.FILE_NAME, RuneConfigurationFileProvider.LEGACY_FILE_NAME);
+
+	private ClientCapabilities clientCapabilities;
+
 	@Inject
 	void warmupSerializer(SerializerWarmUpService warmUpService) {
 		warmUpService.warmUp();
@@ -139,7 +134,7 @@ public class RosettaLanguageServerImpl extends LanguageServerImpl implements Ros
 	private boolean isConfigFile(String uri) {
 		return uri != null && CONFIG_FILE_NAMES.stream().anyMatch(uri::endsWith);
 	}
-	
+
 	@Override
 	public RosettaTextDocumentService getRosettaTextDocumentService() {
 		return this;
